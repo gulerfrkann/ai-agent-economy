@@ -13,23 +13,29 @@ import (
 )
 
 func main() {
-	fmt.Println(" Otonom Ajan Simülasyonu Başlatılıyor...")
+	fmt.Println("🌍 Otonom Ajan Simülasyonu Başlatılıyor...")
 
-	// 1. İşletim sisteminden gelen kapanma sinyallerini yönetmek için Context
+	// 1. Pazar yeri verilerini yükle (Python ile dönüştürdüğümüz JSON)
+	marketplace, err := engine.NewMarketplace("data/products.json")
+	if err != nil {
+		fmt.Printf("❌ Kritik Hata: %v\n", err)
+		return
+	}
+	// İleride ajanlar bu marketplace üzerinden rastgele ürünler seçecek/satacak
+	_ = marketplace
+
+	// 2. İşletim sisteminden gelen kapanma sinyallerini yönetmek için Context
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Sinyalleri dinleyen kanal (CTRL+C gibi)
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	// 2. Goroutine'lerin işini bitirmesini beklemek için WaitGroup
 	var wg sync.WaitGroup
 
-	// 3. Motoru başlat (Her 1 saniyede bir tetiklenecek şekilde)
+	// 3. Motoru başlat
 	sim := engine.NewSimulation(1 * time.Second)
-	// Simülasyonu oluştur
-	// Simülasyona otonom ajanlar ekleyelim
+
 	sim.AddAgent(&engine.BaseAgent{ID: "Trader-Alpha", Balance: 1000.0})
 	sim.AddAgent(&engine.BaseAgent{ID: "Trader-Beta", Balance: 1500.0})
 	sim.AddAgent(&engine.BaseAgent{ID: "Merchant-Gamma", Balance: 500.0})
@@ -37,14 +43,10 @@ func main() {
 	wg.Add(1)
 	go sim.Start(ctx, &wg)
 
-	// 4. Kullanıcı CTRL+C basana kadar ana programı burada beklet
 	<-sigChan
 	fmt.Println("\n[SİSTEM] Kapatma sinyali alındı, motor durduruluyor...")
 	
-	// Motorun içindeki ctx.Done() kanalını tetikler
 	cancel()
-
-	// Motorun güvenli bir şekilde durmasını bekle
 	wg.Wait()
-	fmt.Println(" Simülasyon güvenli bir şekilde kapatıldı.")
+	fmt.Println("✅ Simülasyon güvenli bir şekilde kapatıldı.")
 }

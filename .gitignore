@@ -1,0 +1,8 @@
+# Parquet ve büyük veri dosyaları
+*.parquet
+data/
+
+# Go build çıktıları
+*.exe
+*.out
+bin/

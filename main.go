@@ -13,12 +13,12 @@ import (
 )
 
 func main() {
-	fmt.Println("🌍 Otonom Ajan Simülasyonu Başlatılıyor...")
+	fmt.Println(" Otonom Ajan Simülasyonu Başlatılıyor...")
 
 	// 1. Pazar yeri verilerini yükle (Python ile dönüştürdüğümüz JSON)
 	marketplace, err := engine.NewMarketplace("data/products.json")
 	if err != nil {
-		fmt.Printf("❌ Kritik Hata: %v\n", err)
+		fmt.Printf(" Kritik Hata: %v\n", err)
 		return
 	}
 	// İleride ajanlar bu marketplace üzerinden rastgele ürünler seçecek/satacak
@@ -34,7 +34,7 @@ func main() {
 	var wg sync.WaitGroup
 
 	// 3. Motoru başlat
-	sim := engine.NewSimulation(1 * time.Second)
+	sim := engine.NewSimulation(1 * time.Second, marketplace)
 
 	sim.AddAgent(&engine.BaseAgent{ID: "Trader-Alpha", Balance: 1000.0})
 	sim.AddAgent(&engine.BaseAgent{ID: "Trader-Beta", Balance: 1500.0})
@@ -48,5 +48,5 @@ func main() {
 	
 	cancel()
 	wg.Wait()
-	fmt.Println("✅ Simülasyon güvenli bir şekilde kapatıldı.")
+	fmt.Println(" Simülasyon güvenli bir şekilde kapatıldı.")
 }

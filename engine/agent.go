@@ -1,26 +1,36 @@
 package engine
+
 import (
 	"fmt"
+	"math/rand"
 )
 
-// Agent, simülasyon içerisindeki her bir yapay zeka aktörünü temsil eder.
+// Agent arayüzü
 type Agent interface {
 	GetID() string
-	Act(tick uint64) error
+	Act(tick uint64, marketplace *Marketplace) error
 }
 
-// BaseAgent, temel özellikleri barındıran basit bir ajan yapısıdır.
+// BaseAgent, temel özellikleri barındırır
 type BaseAgent struct {
-	ID      string
-	Balance float64
+	ID        string
+	Balance   float64
+	Inventory []Product // Ajanın sahip olduğu ürünler
 }
 
 func (a *BaseAgent) GetID() string {
 	return a.ID
 }
 
-func (a *BaseAgent) Act(tick uint64) error {
-	// Şimdilik her ajan tick başına konsola durumunu yazdırsın
-	fmt.Printf(" [Ajan: %s] (Bakiye: %.2f TL) - Tick %d işleniyor...\n", a.ID, a.Balance, tick)
+// Act metoduna pazar yerini de dahil ediyoruz ki ürün seçebilsinler
+func (a *BaseAgent) Act(tick uint64, marketplace *Marketplace) error {
+	// Pazar yerinden rastgele bir ürün seçelim
+	if len(marketplace.Products) > 0 {
+		randomIndex := rand.Intn(len(marketplace.Products))
+		selectedProduct := marketplace.Products[randomIndex]
+
+		fmt.Printf("🤖 [Ajan: %s] (Bakiye: %.2f TL) - Tick %d: Pazar yerinden '%s' (%s) ürününü inceledi.\n", 
+			a.ID, a.Balance, tick, selectedProduct.Urun, selectedProduct.MarkaAd)
+	}
 	return nil
 }

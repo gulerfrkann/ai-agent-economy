@@ -5,7 +5,7 @@ import os
 parquet_path = os.path.join("data", "stajyer_tavsiye_sistem.parquet")
 json_output_path = os.path.join("data", "products.json")
 
-print("🔄 Parquet dosyası okunuyor...")
+print(" Parquet dosyası okunuyor...")
 df = pd.read_parquet(parquet_path)
 
 # Veriyi JSON formatına çevir ve data klasörüne kaydet

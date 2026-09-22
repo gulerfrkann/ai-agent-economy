@@ -14,6 +14,7 @@ type BaseAgent struct {
 	ID        string
 	Balance   float64
 	Inventory []Product
+	Interests []string // Yeni: Ajanın ilgi duyduğu/uzmanlaştığı kategoriler (Örn: "Kitap", "Kırtasiye")
 }
 
 func (a *BaseAgent) GetID() string {
@@ -21,7 +22,7 @@ func (a *BaseAgent) GetID() string {
 }
 
 func (a *BaseAgent) Act(tick uint64, marketplace *Marketplace) error {
-	// 1. Gelir Döngüsü: Her ajan her tick'te sistemden taban gelir elde eder (Örn: 150 TL)
+	// 1. Gelir Döngüsü: Her ajan her tick'te sistemden taban gelir elde eder (150 TL)
 	earnedIncome := 150.00
 	a.Balance += earnedIncome
 
@@ -29,20 +30,43 @@ func (a *BaseAgent) Act(tick uint64, marketplace *Marketplace) error {
 		return nil
 	}
 
-	// Pazar yerinden rastgele bir ürün seç
-	randomIndex := rand.Intn(len(marketplace.Products))
-	selectedProduct := marketplace.Products[randomIndex]
+	// 2. Akıllı Ürün Seçimi: Uzmanlık alanına uygun ürün bulmaya çalışalım
+	var selectedProduct Product
+	found := false
 
-	// 2. Satın Alma Mantığı
+	// Eğer ajanın ilgi alanları varsa, önce o kategorilerden ürün arayalım (10 deneme hakkı verelim)
+	if len(a.Interests) > 0 {
+		for i := 0; i < 10; i++ {
+			p := marketplace.Products[rand.Intn(len(marketplace.Products))]
+			// Ürünün kategorisi ajanın ilgi alanlarından biriyle eşleşiyor mu?
+			for _, interest := range a.Interests {
+				if p.KtgAdi == interest {
+					selectedProduct = p
+					found = true
+					break
+				}
+			}
+			if found {
+				break
+			}
+		}
+	}
+
+	// Eğer ilgi alanına uygun bulunamadıysa veya ajanın ilgi alanı yoksa rastgele bir ürün seç
+	if !found {
+		selectedProduct = marketplace.Products[rand.Intn(len(marketplace.Products))]
+	}
+
+	// 3. Satın Alma Mantığı
 	if a.Balance >= selectedProduct.Price {
 		a.Balance -= selectedProduct.Price
 		a.Inventory = append(a.Inventory, selectedProduct)
 
-		fmt.Printf(" [Ajan: %s] SATIN ALDI! (+%.2f TL Gelir) | Ürün: '%s' | Fiyat: %.2f TL | Kalan Bakiye: %.2f TL\n",
-			a.ID, earnedIncome, selectedProduct.Urun, selectedProduct.Price, a.Balance)
+		fmt.Printf("💰 [Ajan: %s] SATIN ALDI! [%s] | Ürün: '%s' | Fiyat: %.2f TL | Kalan Bakiye: %.2f TL\n",
+			a.ID, selectedProduct.KtgAdi, selectedProduct.Urun, selectedProduct.Price, a.Balance)
 	} else {
-		fmt.Printf(" [Ajan: %s] (+%.2f TL Gelir | Bakiye: %.2f TL) - Tick %d: '%s' inceledi, bakiye yetersiz (Fiyat: %.2f TL).\n",
-			a.ID, earnedIncome, a.Balance, tick, selectedProduct.Urun, selectedProduct.Price)
+		fmt.Printf("🤖 [Ajan: %s] (Bakiye: %.2f TL) - Tick %d: '%s' (%s) inceledi, bakiye yetersiz (Fiyat: %.2f TL).\n",
+			a.ID, a.Balance, tick, selectedProduct.Urun, selectedProduct.KtgAdi, selectedProduct.Price)
 	}
 
 	return nil

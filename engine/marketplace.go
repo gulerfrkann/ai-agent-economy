@@ -24,7 +24,7 @@ type Marketplace struct {
 
 // NewMarketplace, JSON dosyasından ürünleri belleğe yükler ve fiyatlandırır
 func NewMarketplace(jsonPath string) (*Marketplace, error) {
-	fmt.Println("📦 Pazar yeri verileri yükleniyor...")
+	fmt.Println(" Pazar yeri verileri yükleniyor...")
 	file, err := os.Open(jsonPath)
 	if err != nil {
 		return nil, fmt.Errorf("veri dosyası açılamadı: %v", err)
@@ -42,6 +42,6 @@ func NewMarketplace(jsonPath string) (*Marketplace, error) {
 		products[i].Price = float64(rand.Intn(1000)+50) + 0.99
 	}
 
-	fmt.Printf("✅ Pazar yeri hazır! Toplam Ürün Sayısı: %d (Fiyatlar belirlendi)\n", len(products))
+	fmt.Printf(" Pazar yeri hazır! Toplam Ürün Sayısı: %d (Fiyatlar belirlendi)\n", len(products))
 	return &Marketplace{Products: products}, nil
 }

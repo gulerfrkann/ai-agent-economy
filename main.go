@@ -34,10 +34,22 @@ func main() {
 	// 3. Motoru başlat
 	sim := engine.NewSimulation(1 * time.Second, marketplace)
 
-	// Ajanlarımızı tanımlayalım
-	agentAlpha := &engine.BaseAgent{ID: "Trader-Alpha", Balance: 1000.0}
-	agentBeta := &engine.BaseAgent{ID: "Trader-Beta", Balance: 1500.0}
-	agentGamma := &engine.BaseAgent{ID: "Merchant-Gamma", Balance: 500.0}
+	// Ajanlarımızı uzmanlık alanlarıyla birlikte tanımlayalım
+	agentAlpha := &engine.BaseAgent{
+		ID:        "Trader-Alpha",
+		Balance:   1000.0,
+		Interests: []string{"Kitap", "Edebiyat", "Tarih"},
+	}
+	agentBeta := &engine.BaseAgent{
+		ID:        "Trader-Beta",
+		Balance:   1500.0,
+		Interests: []string{"Oyuncak", "Bebek", "Kırtasiye"},
+	}
+	agentGamma := &engine.BaseAgent{
+		ID:        "Merchant-Gamma",
+		Balance:   500.0,
+		Interests: []string{"Elektronik", "Film", "Müzik"},
+	}
 
 	sim.AddAgent(agentAlpha)
 	sim.AddAgent(agentBeta)

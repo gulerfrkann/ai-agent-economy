@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	fmt.Println(" Otonom Ajan Simülasyonu Başlatılıyor...")
+	fmt.Println("Otonom Ajan Simülasyonu Başlatılıyor...")
 
 	// 1. Pazar yeri verilerini yükle (Python ile dönüştürdüğümüz JSON)
 	marketplace, err := engine.NewMarketplace("data/products.json")
@@ -21,8 +21,6 @@ func main() {
 		fmt.Printf(" Kritik Hata: %v\n", err)
 		return
 	}
-	// İleride ajanlar bu marketplace üzerinden rastgele ürünler seçecek/satacak
-	_ = marketplace
 
 	// 2. İşletim sisteminden gelen kapanma sinyallerini yönetmek için Context
 	ctx, cancel := context.WithCancel(context.Background())
@@ -36,9 +34,14 @@ func main() {
 	// 3. Motoru başlat
 	sim := engine.NewSimulation(1 * time.Second, marketplace)
 
-	sim.AddAgent(&engine.BaseAgent{ID: "Trader-Alpha", Balance: 1000.0})
-	sim.AddAgent(&engine.BaseAgent{ID: "Trader-Beta", Balance: 1500.0})
-	sim.AddAgent(&engine.BaseAgent{ID: "Merchant-Gamma", Balance: 500.0})
+	// Ajanlarımızı tanımlayalım
+	agentAlpha := &engine.BaseAgent{ID: "Trader-Alpha", Balance: 1000.0}
+	agentBeta := &engine.BaseAgent{ID: "Trader-Beta", Balance: 1500.0}
+	agentGamma := &engine.BaseAgent{ID: "Merchant-Gamma", Balance: 500.0}
+
+	sim.AddAgent(agentAlpha)
+	sim.AddAgent(agentBeta)
+	sim.AddAgent(agentGamma)
 
 	wg.Add(1)
 	go sim.Start(ctx, &wg)
@@ -49,4 +52,27 @@ func main() {
 	cancel()
 	wg.Wait()
 	fmt.Println(" Simülasyon güvenli bir şekilde kapatıldı.")
+
+	// 4. Simülasyon Raporu: Ajanların son durumunu yazdıralım
+	fmt.Println("\n === SİMÜLASYON FİNAL RAPORU ===")
+	agents := []engine.Agent{agentAlpha, agentBeta, agentGamma}
+	for _, agent := range agents {
+		if bAgent, ok := agent.(*engine.BaseAgent); ok {
+			fmt.Printf(" Ajan: %-15s | Kalan Bakiye: %8.2f TL | Envanter Ürün Sayısı: %d\n",
+				bAgent.ID, bAgent.Balance, len(bAgent.Inventory))
+			
+			// İsteğe bağlı: Envanterindeki son 2-3 ürünü de detaylı gösterelim ki aldıklarını görebilelim
+			if len(bAgent.Inventory) > 0 {
+				fmt.Println("    Aldığı Bazı Ürünler:")
+				for i, prod := range bAgent.Inventory {
+					if i >= 3 { // Çok uzatmamak için ilk 3 ürünü gösterelim
+						fmt.Printf("      ... ve %d ürün daha\n", len(bAgent.Inventory)-3)
+						break
+					}
+					fmt.Printf("      - %s (%.2f TL)\n", prod.Urun, prod.Price)
+				}
+			}
+			fmt.Println("--------------------------------------------------")
+		}
+	}
 }

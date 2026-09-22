@@ -21,6 +21,10 @@ func (a *BaseAgent) GetID() string {
 }
 
 func (a *BaseAgent) Act(tick uint64, marketplace *Marketplace) error {
+	// 1. Gelir Döngüsü: Her ajan her tick'te sistemden taban gelir elde eder (Örn: 150 TL)
+	earnedIncome := 150.00
+	a.Balance += earnedIncome
+
 	if len(marketplace.Products) == 0 {
 		return nil
 	}
@@ -29,16 +33,16 @@ func (a *BaseAgent) Act(tick uint64, marketplace *Marketplace) error {
 	randomIndex := rand.Intn(len(marketplace.Products))
 	selectedProduct := marketplace.Products[randomIndex]
 
-	// Bakiye kontrolü ve satın alma mantığı
+	// 2. Satın Alma Mantığı
 	if a.Balance >= selectedProduct.Price {
 		a.Balance -= selectedProduct.Price
 		a.Inventory = append(a.Inventory, selectedProduct)
 
-		fmt.Printf(" [Ajan: %s] SATIN ALDI! | Ürün: '%s' | Fiyat: %.2f TL | Kalan Bakiye: %.2f TL\n",
-			a.ID, selectedProduct.Urun, selectedProduct.Price, a.Balance)
+		fmt.Printf(" [Ajan: %s] SATIN ALDI! (+%.2f TL Gelir) | Ürün: '%s' | Fiyat: %.2f TL | Kalan Bakiye: %.2f TL\n",
+			a.ID, earnedIncome, selectedProduct.Urun, selectedProduct.Price, a.Balance)
 	} else {
-		fmt.Printf(" [Ajan: %s] (Bakiye: %.2f TL) - Tick %d: '%s' ürününü inceledi, bakiye yetersiz (Fiyat: %.2f TL).\n",
-			a.ID, a.Balance, tick, selectedProduct.Urun, selectedProduct.Price)
+		fmt.Printf(" [Ajan: %s] (+%.2f TL Gelir | Bakiye: %.2f TL) - Tick %d: '%s' inceledi, bakiye yetersiz (Fiyat: %.2f TL).\n",
+			a.ID, earnedIncome, a.Balance, tick, selectedProduct.Urun, selectedProduct.Price)
 	}
 
 	return nil

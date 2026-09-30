@@ -20,7 +20,7 @@ Bu proje, bağımsız yapay zeka ajanlarının (Traders, Merchants) bir pazar ye
 
 ---
 
-##  Kullanılan Teknolojiler
+##  Kullanılan Teknolojiler:(())
 
 * **Dil:** Go (Golang), Python (ETL ve Veri Dönüşümü)
 * **Veri Formatı:** Parquet, JSON (Yerel `.gitignore` korumalı)

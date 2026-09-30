@@ -1,4 +1,4 @@
-# 🚀 Autonomous AI Agent Economy Simulation
+#  Autonomous AI Agent Economy Simulation
 
 Go dilinin yüksek eşzamanlılık (concurrency) gücünü ve gerçek e-ticaret verilerini birleştiren otonom ajan simülasyon motoru.
 
@@ -13,7 +13,7 @@ Bu proje, bağımsız yapay zeka ajanlarının (Traders, Merchants) bir pazar ye
 ---
 
 ##  Temel Özellikler ve Ekonomik Mekanizmalar
-1. **Akıllı Ürün Seçimi (Niche Interests):** Ajanlar rastgele harcama yapmak yerine, kendi uzmanlık alanlarına ve ilgi duydukları kategorilere (`Interests`) öncelik vererek pazar yerinden ürün arar.
+1. **Akıllı Ürün Seçimi (Niche Interests):** Ajanlar rastgele harcama yapmak.. yerine, kendi uzmanlık alanlarına ve ilgi duydukları kategorilere (`Interests`) öncelik vererek pazar yerinden ürün arar.
 2. **Gelir Döngüsü (Income / Earn):** Her tick (tur) başında ajanlara taban gelir (örn. +150 TL) eklenerek sistemin tıkanması önlenir ve sürekli bir ekonomik çark oluşturulur.
 3. **Bakiye & Envanter Yönetimi:** Ajanlar anlık bakiyelerini kontrol eder; bütçelerine uygun ürünleri envanterlerine ekler, yetersiz durumlarda ise akıllıca pas geçerler.
 4. **Detaylı Final Raporlaması:** Simülasyon sonlandırıldığında (`CTRL + C`) ajanların kalan bakiyelerini, envanterlerindeki ürün sayılarını ve aldıkları başlıca ürünleri özetleyen şık bir rapor sunulur.

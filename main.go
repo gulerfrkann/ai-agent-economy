@@ -84,7 +84,11 @@ func main() {
 					fmt.Printf("      - %s (%.2f TL)\n", prod.Urun, prod.Price)
 				}
 			}
-			fmt.Println("--------------------------------------------------")
+			// 4. Simülasyon Raporu: Ajanların ve Piyasanın son durumu
+    marketplace.PrintMarketSummary()
+    
+    fmt.Println("\n === AJAN FİNAL RAPORU ===")
+    // ... mevcut ajan raporu döngün ...
 		}
 	}
 }

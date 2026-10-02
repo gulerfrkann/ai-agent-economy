@@ -164,7 +164,7 @@ func (m *Marketplace) PrintMarketSummary() {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	fmt.Println("\n📊 --- PİYASA FİYAT & ENFLASYON RAPORU ---")
+	fmt.Println("\n --- PİYASA FİYAT & ENFLASYON RAPORU ---")
 	for cat, stat := range m.Categories {
 		var inflation float64
 		if stat.BasePrice > 0 {

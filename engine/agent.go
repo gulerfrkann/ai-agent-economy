@@ -52,7 +52,7 @@ func (a *BaseAgent) Act(tick uint64, marketplace *Marketplace) error {
 			Price:    currentPrice,
 		})
 
-		fmt.Printf("🛒 [%s] ajan satın aldı: %s kategorisinden ürün (Fiyat: %.2f TL, Kalan Bakiye: %.2f TL)\n",
+		fmt.Printf(" [%s] ajan satın aldı: %s kategorisinden ürün (Fiyat: %.2f TL, Kalan Bakiye: %.2f TL)\n",
 			a.ID, targetItem.Category, currentPrice, a.Balance)
 	} else {
 		// Paran yetmiyorsa pazara kendi uzmanlık alanından daha ucuz bir ürün koy (Arz yarat)

@@ -190,11 +190,11 @@ func (m *Marketplace) PrintMarketSummary() {
 			inflation = ((stat.CurrentPrice - stat.BasePrice) / stat.BasePrice) * 100.0
 		}
 		
-		arrow := "🟢"
+		arrow := ""
 		if inflation > 0 {
-			arrow = "🔴" // Enflasyon
+			arrow = "" // Enflasyon
 		} else if inflation < 0 {
-			arrow = "🔵" // Deflasyon
+			arrow = "" // Deflasyon
 		}
 		fmt.Printf("%s %-12s: %.2f TL (Başlangıç: %.2f TL | Değişim: %+.1f%%)\n",
 			arrow, cat, stat.CurrentPrice, stat.BasePrice, inflation)

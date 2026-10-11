@@ -3,26 +3,34 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
 
-	"github.com/gulerfrkann/ai-agent-economy/engine"
+	"ai-agent-economy/engine"
 )
 
 func main() {
 	fmt.Println("Otonom Ajan Simülasyonu Başlatılıyor...")
 
-	// 1. Pazar yeri verilerini yükle (Python ile dönüştürdüğümüz JSON)
-	marketplace, err := engine.NewMarketplace("data/products.json")
+	// 1. Veritabanı Yöneticisini Başlat (Doğrudan engine paketinden)
+	dbMgr, err := engine.NewDBManager("simulation.db")
 	if err != nil {
-		fmt.Printf(" Kritik Hata: %v\n", err)
+		log.Fatalf(" Kritik Hata - Veritabanı başlatılamadı: %v", err)
+	}
+	defer dbMgr.Close()
+
+	// 2. Pazar yeri verilerini yükle ve veritabanı referansını ver
+	marketplace, err := engine.NewMarketplace("data/products.json", dbMgr)
+	if err != nil {
+		fmt.Printf(" Kritik Hata: %v", err)
 		return
 	}
 
-	// 2. İşletim sisteminden gelen kapanma sinyallerini yönetmek için Context
+	// 3. İşletim sisteminden gelen kapanma sinyallerini yönetmek için Context
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -31,8 +39,8 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	// 3. Motoru başlat
-	sim := engine.NewSimulation(1 * time.Second, marketplace)
+	// 4. Motoru başlat (DB yöneticisi simülasyona da veriliyor)
+	sim := engine.NewSimulation(1*time.Second, marketplace, dbMgr)
 
 	// Ajanlarımızı uzmanlık alanlarıyla birlikte tanımlayalım
 	agentAlpha := &engine.BaseAgent{
@@ -65,7 +73,7 @@ func main() {
 	wg.Wait()
 	fmt.Println(" Simülasyon güvenli bir şekilde kapatıldı.")
 
-	// 4. Simülasyon Raporu: Ajanların son durumunu yazdıralım
+	// 5. Simülasyon Raporu: Ajanların ve Piyasanın son durumu
 	fmt.Println("\n === SİMÜLASYON FİNAL RAPORU ===")
 	agents := []engine.Agent{agentAlpha, agentBeta, agentGamma}
 	for _, agent := range agents {
@@ -73,22 +81,19 @@ func main() {
 			fmt.Printf(" Ajan: %-15s | Kalan Bakiye: %8.2f TL | Envanter Ürün Sayısı: %d\n",
 				bAgent.ID, bAgent.Balance, len(bAgent.Inventory))
 			
-			// İsteğe bağlı: Envanterindeki son 2-3 ürünü de detaylı gösterelim ki aldıklarını görebilelim
 			if len(bAgent.Inventory) > 0 {
 				fmt.Println("    Aldığı Bazı Ürünler:")
 				for i, prod := range bAgent.Inventory {
-					if i >= 3 { // Çok uzatmamak için ilk 3 ürünü gösterelim
+					if i >= 3 {
 						fmt.Printf("      ... ve %d ürün daha\n", len(bAgent.Inventory)-3)
 						break
 					}
 					fmt.Printf("      - %s (%.2f TL)\n", prod.Urun, prod.Price)
 				}
 			}
-			// 4. Simülasyon Raporu: Ajanların ve Piyasanın son durumu
-    marketplace.PrintMarketSummary()
-    
-    fmt.Println("\n === AJAN FİNAL RAPORU ===")
-    // ... mevcut ajan raporu döngün ...
 		}
 	}
+
+	// Piyasa Fiyat ve Enflasyon Raporu
+	marketplace.PrintMarketSummary()
 }

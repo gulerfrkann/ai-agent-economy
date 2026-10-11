@@ -1,71 +1,78 @@
 package engine
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
 )
 
 type Agent interface {
+	Act(m *Marketplace, tickNo int, db *DBManager)
 	GetID() string
-	Act(tick uint64, marketplace *Marketplace) error
 }
 
 type BaseAgent struct {
 	ID        string
 	Balance   float64
-	Inventory []MarketItem // Artık MarketItem kullanıyoruz
-	Interests []string     // Kategori uzmanlıkları
+	Inventory []MarketItem
+	Interests []string
 }
 
 func (a *BaseAgent) GetID() string {
 	return a.ID
 }
 
-func (a *BaseAgent) Act(tick uint64, marketplace *Marketplace) error {
-	// 1. Pazar tahtasından rastgele bir ürün seç
-	marketplace.mu.RLock()
-	if len(marketplace.Items) == 0 {
-		marketplace.mu.RUnlock()
-		return errors.New("pazarda ürün kalmadı")
+func (a *BaseAgent) Act(m *Marketplace, tickNo int, db *DBManager) {
+	m.mu.RLock()
+	if len(m.Items) == 0 {
+		m.mu.RUnlock()
+		return
 	}
 
 	// Rastgele bir ilan seç
-	randomIndex := rand.Intn(len(marketplace.Items))
-	targetItem := marketplace.Items[randomIndex]
-	marketplace.mu.RUnlock()
+	randomIndex := rand.Intn(len(m.Items))
+	targetItem := m.Items[randomIndex]
+	m.mu.RUnlock()
 
-	// 2. Kategori fiyatını dinamik olarak al
-	currentPrice := marketplace.GetPrice(targetItem.Category)
+	// Kategori fiyatını dinamik olarak al
+	currentPrice := m.GetPrice(targetItem.Category)
 
-	// Eğer ajanın bakiye gücü yetiyorsa ve ilgilendiği kategorideyse satın almayı dene
+	// Eğer ajanın bakiye gücü yetiyorsa satın al
 	if a.Balance >= currentPrice {
-		// Talep kaydını düş (Arz-talep dengesi ve enflasyon için)
-		marketplace.RecordDemand(targetItem.Category)
+		m.RecordDemand(targetItem.Category)
 
 		a.Balance -= currentPrice
-		a.Inventory = append(a.Inventory, MarketItem{
+		purchasedItem := MarketItem{
 			ID:       targetItem.ID,
 			SellerID: targetItem.SellerID,
-			Urun:     targetItem.Urun, // <-- Buraya ürün adını ekliyoruz
+			Urun:     targetItem.Urun,
 			Category: targetItem.Category,
 			Price:    currentPrice,
-		})
+		}
+		a.Inventory = append(a.Inventory, purchasedItem)
 
-		fmt.Printf(" [%s] ajan satın aldı: %s kategorisinden ürün (Fiyat: %.2f TL, Kalan Bakiye: %.2f TL)\n",
-			a.ID, targetItem.Category, currentPrice, a.Balance)
+		fmt.Printf("🛒 [%s] satın aldı: %s (%s) - Fiyat: %.2f TL (Kalan: %.2f TL)\n",
+			a.ID, targetItem.Urun, targetItem.Category, currentPrice, a.Balance)
+
+		// İşlemi SQLite veritabanına asenkron olarak kaydet
+		if db != nil {
+			db.LogTransaction(AgentTransactionLog{
+				TickNo:     tickNo,
+				AgentName:  a.ID,
+				ItemName:   targetItem.Urun,
+				Category:   targetItem.Category,
+				Price:      currentPrice,
+				NewBalance: a.Balance,
+			})
+		}
 	} else {
-		// Paran yetmiyorsa pazara kendi uzmanlık alanından daha ucuz bir ürün koy (Arz yarat)
 		// Paran yetmiyorsa pazara kendi uzmanlık alanından daha ucuz bir ürün koy (Arz yarat)
 		if len(a.Interests) > 0 {
 			favCategory := a.Interests[rand.Intn(len(a.Interests))]
-			basePrice := marketplace.GetPrice(favCategory)
+			basePrice := m.GetPrice(favCategory)
 			sellPrice := basePrice * 0.95 // Rekabetçi fiyat
 			productName := fmt.Sprintf("%s-Urunu-%d", favCategory, rand.Intn(100))
 
-			marketplace.AddItem(0, productName, favCategory, sellPrice)
+			m.AddItem(0, productName, favCategory, sellPrice)
 		}
 	}
-
-	return nil
 }

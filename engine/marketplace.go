@@ -9,10 +9,10 @@ import (
 
 // Product JSON dosyasındaki gerçek alan adlarıyla birebir eşleştirildi
 type Product struct {
-	ID       int     `json:"UrunId"`
-	Urun     string  `json:"Urun"`
-	Category string  `json:"KtgAdi"`
-	SubCat   string  `json:"Ktg2Adi"`
+	ID       int    `json:"UrunId"`
+	Urun     string `json:"Urun"`
+	Category string `json:"KtgAdi"`
+	SubCat   string `json:"Ktg2Adi"`
 }
 
 type MarketItem struct {
@@ -35,9 +35,10 @@ type Marketplace struct {
 	Items      []MarketItem
 	Categories map[string]*CategoryStat
 	nextItemID int
+	DB         *DBManager // Doğrudan engine paketindeki DBManager kullanılıyor
 }
 
-func NewMarketplace(filePath string) (*Marketplace, error) {
+func NewMarketplace(filePath string, dbMgr *DBManager) (*Marketplace, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("ürün dosyası açılamadı: %v", err)
@@ -54,6 +55,7 @@ func NewMarketplace(filePath string) (*Marketplace, error) {
 		Items:      make([]MarketItem, 0),
 		Categories: make(map[string]*CategoryStat),
 		nextItemID: 1,
+		DB:         dbMgr,
 	}
 
 	categoryTotals := make(map[string]float64)
@@ -66,7 +68,6 @@ func NewMarketplace(filePath string) (*Marketplace, error) {
 		}
 
 		// JSON'da fiyat olmadığı için UrunId'ye göre dinamik ama tutarlı bir fiyat üretiyoruz (50 TL - 450 TL arası)
-		// Düzeltilmiş satır (p.Uunn -> p.Urun)
 		generatedPrice := 50.0 + (float64(p.ID%400) + float64(len(p.Urun)%50))
 
 		categoryTotals[cat] += generatedPrice
@@ -133,14 +134,32 @@ func (m *Marketplace) AddItem(sellerID int, urun string, category string, price 
 	}
 }
 
-func (m *Marketplace) UpdateDynamicPrices() {
+func (m *Marketplace) UpdateDynamicPrices(tickNo int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	elasticity := 0.08
 
-	for _, stat := range m.Categories {
+	for cat, stat := range m.Categories {
 		totalActivity := float64(stat.DemandCount + stat.SupplyCount)
+
+		var inflation float64
+		if stat.BasePrice > 0 {
+			inflation = ((stat.CurrentPrice - stat.BasePrice) / stat.BasePrice) * 100.0
+		}
+
+		// Her tick durumunu SQLite veritabanına asenkron olarak kaydediyoruz
+		if m.DB != nil {
+			m.DB.LogTick(TickLog{
+				TickNo:    tickNo,
+				Category:  cat,
+				Price:     stat.CurrentPrice,
+				Inflation: inflation,
+				Demand:    stat.DemandCount,
+				Supply:    stat.SupplyCount,
+			})
+		}
+
 		if totalActivity == 0 {
 			continue
 		}
@@ -164,7 +183,7 @@ func (m *Marketplace) PrintMarketSummary() {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	fmt.Println("\n --- PİYASA FİYAT & ENFLASYON RAPORU ---")
+	fmt.Println("\n📊 --- PİYASA FİYAT & ENFLASYON RAPORU ---")
 	for cat, stat := range m.Categories {
 		var inflation float64
 		if stat.BasePrice > 0 {
